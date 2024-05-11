@@ -30,7 +30,7 @@ def browser():
 @pytest.mark.parametrize("left_clicks", [20, 21, 25, 100])
 def test_unrestricted_left_movement(browser: webdriver.Chrome, left_clicks: int):
     browser.get(TESTING_URL)
-    WebDriverWait(browser, 15).until(EC.presence_of_element_located((By.ID, "login-btn"))).click()
+    WebDriverWait(browser, 15).until(EC.element_to_be_clickable((By.ID, "login-btn"))).click()
 
     # Try to spam the left arrow button to move past the boundary.
     for _ in range(left_clicks):
@@ -38,7 +38,7 @@ def test_unrestricted_left_movement(browser: webdriver.Chrome, left_clicks: int)
         # so we catch it and try again in a while loop.
         while True:
             try:
-                WebDriverWait(browser, 15).until(EC.presence_of_element_located((By.ID, "arrowLeft"))).click()
+                WebDriverWait(browser, 15).until(EC.element_to_be_clickable((By.ID, "arrowLeft"))).click()
                 break
             except StaleElementReferenceException:
                 pass
