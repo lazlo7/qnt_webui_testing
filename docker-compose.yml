@@ -1,0 +1,6 @@
+services:
+  webui:
+    image: requef/hse-webui-testing-sbts
+    ports:
+      - 8091:8091
+      - 7852:7852
