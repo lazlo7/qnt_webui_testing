@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "webui"
+version = "0.1.0"
+description = "Testing webui with selenium, pytest and chromedriver"
+authors = ["Max Smagin <lazlogogalac777@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+selenium = "^4.20.0"
+pytest = "^8.2.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
