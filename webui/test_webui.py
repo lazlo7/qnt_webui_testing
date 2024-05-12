@@ -28,7 +28,7 @@ def browser():
 
 
 @pytest.mark.parametrize("left_clicks", [20, 21, 25, 100])
-def test_unrestricted_left_movement(browser: webdriver.Chrome, left_clicks: int):
+def test_moving_past_left_boundary(browser: webdriver.Chrome, left_clicks: int):
     browser.get(TESTING_URL)
     WebDriverWait(browser, 15).until(EC.element_to_be_clickable((By.ID, "login-btn"))).click()
 
