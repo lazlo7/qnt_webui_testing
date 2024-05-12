@@ -1,6 +1,4 @@
-from math import exp
 import os
-from time import time
 import pytest
 from re import match
 from selenium import webdriver
@@ -84,7 +82,7 @@ def test_moving_during_timer(browser: webdriver.Chrome, direction: str, clicks: 
     # Wait till we have moved.
     WebDriverWait(browser, 5).until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.moveAnimation.hidden")))
     WebDriverWait(browser, 5).until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.moveAnimation")))
-    
+
     # If we managed to move on more than one place in less than 2 seconds, then that's a bug.
     expected_place = -1 if direction == "left" else 1
     assert extract_place_value(browser) == expected_place
