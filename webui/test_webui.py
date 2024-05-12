@@ -1,4 +1,6 @@
+from math import exp
 import os
+from time import time
 import pytest
 from re import match
 from selenium import webdriver
@@ -11,6 +13,7 @@ from selenium.common.exceptions import StaleElementReferenceException
 
 TESTING_URL = os.getenv("TESTING_URL", "http://localhost:8091/")
 MIN_POSITION = -19
+MIN_TIME_TO_MOVE = 2
 
 
 @pytest.fixture
@@ -25,6 +28,13 @@ def browser():
     driver.delete_all_cookies()
     yield driver
     driver.quit()
+
+
+def extract_place_value(browser: webdriver.Chrome) -> int:
+    place_element = browser.find_element(By.ID, "place")
+    matched_text = match(r".*\[(.+)\]", place_element.text)
+    assert matched_text is not None
+    return int(matched_text.group(1))
 
 
 @pytest.mark.parametrize("left_clicks", [20, 21, 25, 100])
@@ -46,12 +56,35 @@ def test_moving_past_left_boundary(browser: webdriver.Chrome, left_clicks: int):
     # Wait till we have moved.
     WebDriverWait(browser, 15).until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.moveAnimation.hidden")))
     WebDriverWait(browser, 15).until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.moveAnimation")))
-
-    # Extract the place value.
-    place_element = browser.find_element(By.ID, "place")
-    matched_text = match(r".*\[(.+)\]", place_element.text)
-    assert matched_text is not None
-    got_place = int(matched_text.group(1))
     
     # Place should be MIN_POSITION, since we can't move past it.
-    assert got_place == MIN_POSITION
+    assert extract_place_value(browser) == MIN_POSITION
+
+
+@pytest.mark.parametrize("direction", ["left", "right"])
+@pytest.mark.parametrize("clicks", [2, 3])
+def test_moving_during_timer(browser: webdriver.Chrome, direction: str, clicks: int):
+    browser.get(TESTING_URL)
+    WebDriverWait(browser, 15).until(EC.element_to_be_clickable((By.ID, "login-btn"))).click()
+
+    arrow_id = "arrowLeft" if direction == "left" else "arrowRight"
+
+    # Click the button many times.
+    # We are aiming to move more than one place in less than 2 seconds.
+    # Checking that the button could be clicked is not enough,
+    # since the onClick() function may handle the click differently, depending on timer.
+    for _ in range(clicks):
+        while True:
+            try:
+                WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, arrow_id))).click()
+                break
+            except StaleElementReferenceException:
+                pass
+
+    # Wait till we have moved.
+    WebDriverWait(browser, 5).until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.moveAnimation.hidden")))
+    WebDriverWait(browser, 5).until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.moveAnimation")))
+    
+    # If we managed to move on more than one place in less than 2 seconds, then that's a bug.
+    expected_place = -1 if direction == "left" else 1
+    assert extract_place_value(browser) == expected_place
