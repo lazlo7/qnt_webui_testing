@@ -3,6 +3,7 @@ import pytest
 from re import match
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -21,7 +22,13 @@ def browser():
     chrome_path = os.getenv("CHROME_PATH")
     if chrome_path is not None:
         options.binary_location = chrome_path
-    driver = webdriver.Chrome(options=options)
+    
+    # Use CHROME_DRIVER_PATH if set, otherwise use the default path.
+    driver_path = os.getenv("CHROMEDRIVER_PATH")
+    service = Service() if driver_path is None else Service(executable_path=driver_path)
+
+    driver = webdriver.Chrome(options=options, service=service)
+    
     # Delete all cookies, so that there would be a clean session every time.
     driver.delete_all_cookies()
     yield driver

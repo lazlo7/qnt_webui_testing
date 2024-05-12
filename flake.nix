@@ -30,6 +30,7 @@
         ];
         shellHook = ''
           export CHROME_PATH=${pkgs.google-chrome}/bin/google-chrome-stable
+          export CHROMEDRIVER_PATH=${pkgs.chromedriver}/bin/chromedriver
         '';
       };
   };
