@@ -13,6 +13,7 @@ from selenium.common.exceptions import StaleElementReferenceException
 TESTING_URL = os.getenv("TESTING_URL", "http://localhost:8091/")
 MIN_POSITION = -19
 MIN_TIME_TO_MOVE = 2
+MAX_SESSSION_ID_LENGTH = 20
 
 
 @pytest.fixture
@@ -93,3 +94,19 @@ def test_moving_during_timer(browser: webdriver.Chrome, direction: str, clicks: 
     # If we managed to move on more than one place in less than 2 seconds, then that's a bug.
     expected_place = -1 if direction == "left" else 1
     assert extract_place_value(browser) == expected_place
+
+
+def test_long_session_id(browser: webdriver.Chrome):
+    browser.get(TESTING_URL)
+
+    # Input session id of length 20.
+    WebDriverWait(browser, 15).until(EC.element_to_be_clickable((By.ID, "sessionId"))).click()
+    browser.find_element(By.ID, "sessionId").clear()
+    browser.find_element(By.ID, "sessionId").send_keys("a" * MAX_SESSSION_ID_LENGTH)
+    
+    # Try to login.
+    WebDriverWait(browser, 15).until(EC.element_to_be_clickable((By.ID, "login-btn"))).click()
+
+    # We expect to login successfully 
+    # -> no error alert should appear and status should change to "Online".
+    WebDriverWait(browser, 15).until(EC.text_to_be_present_in_element((By.ID, "status"), "Online"))
