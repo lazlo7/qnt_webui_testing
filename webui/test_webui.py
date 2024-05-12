@@ -112,12 +112,12 @@ def test_long_session_id(browser: webdriver.Chrome):
     WebDriverWait(browser, 15).until(EC.text_to_be_present_in_element((By.ID, "status"), "Online"))
 
 
-# Helper function to get the prices of water by XPath.
-def get_water_prices(browser: webdriver.Chrome) -> tuple[float, float]:
-    # Find element with prices by XPath.
+# Helper function to get the prices of a unit of an item in a dock by XPath.
+def get_item_prices(browser: webdriver.Chrome, item_id: int) -> tuple[float, float]:
+    xpath = f'//*[@id="tradeTable"]/tr[{item_id}]/td[4]'
     while True:
         try:
-            prices = WebDriverWait(browser, 15).until(EC.presence_of_element_located((By.XPATH, '//*[@id="tradeTable"]/tr[1]/td[4]'))).text
+            prices = WebDriverWait(browser, 15).until(EC.presence_of_element_located((By.XPATH, xpath))).text
             buy_price, sell_price = map(float, prices.split("/"))
             return buy_price, sell_price
         except StaleElementReferenceException:
@@ -137,14 +137,37 @@ def test_sell_item_to_dock_price_change(browser: webdriver.Chrome):
     WebDriverWait(browser, 15).until(EC.element_to_be_clickable((By.ID, "item1008buy"))).click()
 
     # Remember buy/sell prices of water after purchase.
-    buy_price, sell_price = get_water_prices(browser)
+    buy_price, sell_price = get_item_prices(browser, 1)
     
     # Sell one unit of water.
     WebDriverWait(browser, 15).until(EC.element_to_be_clickable((By.ID, "item1008sell"))).click()
 
     # Find new prices of water after selling.
-    new_buy_price, new_sell_price = get_water_prices(browser)
+    new_buy_price, new_sell_price = get_item_prices(browser, 1)
 
     # Check that the buy price decreased and sell price increased after selling.
     assert new_buy_price < buy_price
     assert new_sell_price > sell_price
+
+
+def test_sell_unavailable_medicine_to_dock_buy_price_increased(browser: webdriver.Chrome):
+    browser.get(TESTING_URL)
+
+    # Login.
+    WebDriverWait(browser, 15).until(EC.element_to_be_clickable((By.ID, "login-btn"))).click()
+
+    # Enter docks.
+    WebDriverWait(browser, 15).until(EC.element_to_be_clickable((By.ID, "act-0-0"))).click()
+
+    # Remember buy price of medicine before selling.
+    buy_price, _ = get_item_prices(browser, 4)
+
+    # Sell one unit of medicine.
+    WebDriverWait(browser, 15).until(EC.element_to_be_clickable((By.ID, "item1006sell"))).click()
+
+    # Find new buy price of medicine after selling.
+    new_buy_price, _ = get_item_prices(browser, 4)
+
+    # Since we haven't had any medicine to sell, the buy price shouldn't have changed.
+    # We assume it's fine to compare floats directly, since the prices shouldn't change at all.
+    assert new_buy_price == buy_price
