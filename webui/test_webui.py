@@ -110,3 +110,41 @@ def test_long_session_id(browser: webdriver.Chrome):
     # We expect to login successfully 
     # -> no error alert should appear and status should change to "Online".
     WebDriverWait(browser, 15).until(EC.text_to_be_present_in_element((By.ID, "status"), "Online"))
+
+
+# Helper function to get the prices of water by XPath.
+def get_water_prices(browser: webdriver.Chrome) -> tuple[float, float]:
+    # Find element with prices by XPath.
+    while True:
+        try:
+            prices = WebDriverWait(browser, 15).until(EC.presence_of_element_located((By.XPATH, '//*[@id="tradeTable"]/tr[1]/td[4]'))).text
+            buy_price, sell_price = map(float, prices.split("/"))
+            return buy_price, sell_price
+        except StaleElementReferenceException:
+            pass
+    
+
+def test_sell_item_to_dock_price_change(browser: webdriver.Chrome):
+    browser.get(TESTING_URL)
+
+    # Login.
+    WebDriverWait(browser, 15).until(EC.element_to_be_clickable((By.ID, "login-btn"))).click()
+
+    # Enter docks.
+    WebDriverWait(browser, 15).until(EC.element_to_be_clickable((By.ID, "act-0-0"))).click()
+
+    # Buy one unit of water.
+    WebDriverWait(browser, 15).until(EC.element_to_be_clickable((By.ID, "item1008buy"))).click()
+
+    # Remember buy/sell prices of water after purchase.
+    buy_price, sell_price = get_water_prices(browser)
+    
+    # Sell one unit of water.
+    WebDriverWait(browser, 15).until(EC.element_to_be_clickable((By.ID, "item1008sell"))).click()
+
+    # Find new prices of water after selling.
+    new_buy_price, new_sell_price = get_water_prices(browser)
+
+    # Check that the buy price decreased and sell price increased after selling.
+    assert new_buy_price < buy_price
+    assert new_sell_price > sell_price
