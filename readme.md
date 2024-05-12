@@ -9,24 +9,22 @@
 docker compose up -d
 ```
 
-2\. Установка зависимостей.  
+2\. Установка зависимостей и запуск тестов.  
 Для `nix` систем:
 ```
 nix develop
+pytest webui
 ```
 
-Или для систем с `poetry`:
+С помощью `poetry`:
 ```
 poetry install
+poetry run pytest webui
 ```
 
-Или через `pip`:
+С помощью `pip`:
 ```
 pip -r requirements.txt
-```
-
-3\. Запуск тестов:
-```
 pytest webui
 ```
 
